@@ -3,7 +3,6 @@
 # Python version: 3.6
 
 import matplotlib
-matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import copy
 import numpy as np
@@ -16,7 +15,7 @@ from models.Update import LocalUpdate
 from models.Nets import MLP, CNNMnist, CNNCifar
 from models.Fed import FedAvg
 from models.test import test_img
-
+matplotlib.use('Agg')
 
 if __name__ == '__main__':
     # parse args
@@ -34,7 +33,8 @@ if __name__ == '__main__':
         else:
             dict_users = mnist_noniid(dataset_train, args.num_users)
     elif args.dataset == 'cifar':
-        trans_cifar = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+        trans_cifar = transforms.Compose(
+            [transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
         dataset_train = datasets.CIFAR10('../data/cifar', train=True, download=True, transform=trans_cifar)
         dataset_test = datasets.CIFAR10('../data/cifar', train=False, download=True, transform=trans_cifar)
         if args.iid:
@@ -71,19 +71,22 @@ if __name__ == '__main__':
     best_loss = None
     val_acc_list, net_list = [], []
 
-    if args.all_clients: 
+    if args.all_clients:
         print("Aggregation over all clients")
         w_locals = [w_glob for i in range(args.num_users)]
     for iter in range(args.epochs):
         loss_locals = []
         if not args.all_clients:
             w_locals = []
+        # args.frac represents the fractions of the total users
         m = max(int(args.frac * args.num_users), 1)
+        # select users randomly
         idxs_users = np.random.choice(range(args.num_users), m, replace=False)
         for idx in idxs_users:
             local = LocalUpdate(args=args, dataset=dataset_train, idxs=dict_users[idx])
             w, loss = local.train(net=copy.deepcopy(net_glob).to(args.device))
             if args.all_clients:
+                # keep the order
                 w_locals[idx] = copy.deepcopy(w)
             else:
                 w_locals.append(copy.deepcopy(w))
@@ -111,4 +114,3 @@ if __name__ == '__main__':
     acc_test, loss_test = test_img(net_glob, dataset_test, args)
     print("Training accuracy: {:.2f}".format(acc_train))
     print("Testing accuracy: {:.2f}".format(acc_test))
-

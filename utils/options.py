@@ -4,6 +4,7 @@
 
 import argparse
 
+
 def args_parser():
     parser = argparse.ArgumentParser()
     # federated arguments
@@ -28,6 +29,7 @@ def args_parser():
                         help="Whether use max pooling rather than strided convolutions")
 
     # other arguments
+    # parameter action specify the behavior of the pass-parameter just store or store true, append and so on
     parser.add_argument('--dataset', type=str, default='mnist', help="name of dataset")
     parser.add_argument('--iid', action='store_true', help='whether i.i.d or not')
     parser.add_argument('--num_classes', type=int, default=10, help="number of classes")

@@ -3,9 +3,10 @@
 # @python: 3.6
 
 import torch
-from torch import nn
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 def test_img(net_g, datatest, args):
@@ -17,7 +18,7 @@ def test_img(net_g, datatest, args):
     l = len(data_loader)
     for idx, (data, target) in enumerate(data_loader):
         if args.gpu != -1:
-            data, target = data.cuda(), target.cuda()
+            data, target = data.to(device), target.to(device)
         log_probs = net_g(data)
         # sum up batch loss
         test_loss += F.cross_entropy(log_probs, target, reduction='sum').item()
@@ -31,4 +32,3 @@ def test_img(net_g, datatest, args):
         print('\nTest set: Average loss: {:.4f} \nAccuracy: {}/{} ({:.2f}%)\n'.format(
             test_loss, correct, len(data_loader.dataset), accuracy))
     return accuracy, test_loss
-

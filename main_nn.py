@@ -3,7 +3,6 @@
 # Python version: 3.6
 
 import matplotlib
-matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 import torch
@@ -14,6 +13,10 @@ from torchvision import datasets, transforms
 
 from utils.options import args_parser
 from models.Nets import MLP, CNNMnist, CNNCifar
+
+# set 'Agg' as backend,
+# generate image files in the backend without popping up a graphic window
+matplotlib.use('Agg')
 
 
 def test(net_g, data_loader):
@@ -42,21 +45,24 @@ if __name__ == '__main__':
     args = args_parser()
     args.device = torch.device('cuda:{}'.format(args.gpu) if torch.cuda.is_available() and args.gpu != -1 else 'cpu')
 
+    # set random seed for pytorch generating random numbers
     torch.manual_seed(args.seed)
 
     # load dataset and split users
+    # transforms.Normalize(mean, std) pass mean and std in, transform data to obey normal distribution
     if args.dataset == 'mnist':
         dataset_train = datasets.MNIST('./data/mnist/', train=True, download=True,
-                   transform=transforms.Compose([
-                       transforms.ToTensor(),
-                       transforms.Normalize((0.1307,), (0.3081,))
-                   ]))
+                                       transform=transforms.Compose([
+                                           transforms.ToTensor(),
+                                           transforms.Normalize((0.1307,), (0.3081,))
+                                       ]))
         img_size = dataset_train[0][0].shape
     elif args.dataset == 'cifar':
         transform = transforms.Compose(
             [transforms.ToTensor(),
              transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
-        dataset_train = datasets.CIFAR10('./data/cifar', train=True, transform=transform, target_transform=None, download=True)
+        dataset_train = datasets.CIFAR10('./data/cifar', train=True, transform=transform, target_transform=None,
+                                         download=True)
         img_size = dataset_train[0][0].shape
     else:
         exit('Error: unrecognized dataset')
@@ -68,6 +74,7 @@ if __name__ == '__main__':
         net_glob = CNNMnist(args=args).to(args.device)
     elif args.model == 'mlp':
         len_in = 1
+        # flatten size
         for x in img_size:
             len_in *= x
         net_glob = MLP(dim_in=len_in, dim_hidden=64, dim_out=args.num_classes).to(args.device)
@@ -95,7 +102,7 @@ if __name__ == '__main__':
                     epoch, batch_idx * len(data), len(train_loader.dataset),
                            100. * batch_idx / len(train_loader), loss.item()))
             batch_loss.append(loss.item())
-        loss_avg = sum(batch_loss)/len(batch_loss)
+        loss_avg = sum(batch_loss) / len(batch_loss)
         print('\nTrain loss:', loss_avg)
         list_loss.append(loss_avg)
 
@@ -109,16 +116,17 @@ if __name__ == '__main__':
     # testing
     if args.dataset == 'mnist':
         dataset_test = datasets.MNIST('./data/mnist/', train=False, download=True,
-                   transform=transforms.Compose([
-                       transforms.ToTensor(),
-                       transforms.Normalize((0.1307,), (0.3081,))
-                   ]))
+                                      transform=transforms.Compose([
+                                          transforms.ToTensor(),
+                                          transforms.Normalize((0.1307,), (0.3081,))
+                                      ]))
         test_loader = DataLoader(dataset_test, batch_size=1000, shuffle=False)
     elif args.dataset == 'cifar':
         transform = transforms.Compose(
             [transforms.ToTensor(),
              transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
-        dataset_test = datasets.CIFAR10('./data/cifar', train=False, transform=transform, target_transform=None, download=True)
+        dataset_test = datasets.CIFAR10('./data/cifar', train=False, transform=transform, target_transform=None,
+                                        download=True)
         test_loader = DataLoader(dataset_test, batch_size=1000, shuffle=False)
     else:
         exit('Error: unrecognized dataset')
